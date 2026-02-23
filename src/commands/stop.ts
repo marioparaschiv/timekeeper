@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
+import { discordTimestamp, editStartMessage } from '~/messages.ts';
 import { formatDuration } from '~/format.ts';
 import { sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
@@ -39,15 +40,19 @@ export const stop = {
 		}
 
 		const now = new Date();
+		const duration = formatDuration(now.getTime() - active.startedAt.getTime());
+
 		const reply = await interaction.reply({
-			content: `Session stopped. Duration: ${formatDuration(now.getTime() - active.startedAt.getTime())}`,
+			content: `[Session stopped](${active.startMessageUrl}). ${discordTimestamp(active.startedAt, 't')} - ${discordTimestamp(now, 't')} (${duration})`,
 		});
 		const message = await reply.fetch();
-		const messageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
+		const stopMessageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
 
 		await db
 			.update(sessions)
-			.set({ stoppedAt: now, stopMessageUrl: messageUrl })
+			.set({ stoppedAt: now, stopMessageUrl })
 			.where(eq(sessions.id, active.id));
+
+		await editStartMessage(interaction.client, active.startMessageUrl);
 	},
 };

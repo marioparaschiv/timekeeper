@@ -1,8 +1,9 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { billingCycles, sessions } from '~/db/schema.ts';
+import { discordTimestamp, editStartMessage } from '~/messages.ts';
 import { formatDuration, formatInvoice } from '~/format.ts';
+import { billingCycles, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
 export const invoice = {
@@ -37,16 +38,20 @@ export const invoice = {
 
 		if (active) {
 			const now = new Date();
+			const duration = formatDuration(now.getTime() - active.startedAt.getTime());
+
 			const reply = await interaction.reply({
-				content: `Session stopped. Duration: ${formatDuration(now.getTime() - active.startedAt.getTime())}`,
+				content: `[Session stopped](${active.startMessageUrl}). ${discordTimestamp(active.startedAt, 't')} - ${discordTimestamp(now, 't')} (${duration})`,
 			});
 			const message = await reply.fetch();
-			const messageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
+			const stopMessageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
 
 			await db
 				.update(sessions)
-				.set({ stoppedAt: now, stopMessageUrl: messageUrl })
+				.set({ stoppedAt: now, stopMessageUrl })
 				.where(eq(sessions.id, active.id));
+
+			await editStartMessage(interaction.client, active.startMessageUrl);
 		}
 
 		const rows = await db

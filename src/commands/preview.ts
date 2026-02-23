@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { sessions } from '~/db/schema.ts';
 import { formatInvoice } from '~/format.ts';
+import { sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
 export const preview = {
@@ -13,7 +13,10 @@ export const preview = {
 	async execute(interaction: ChatInputCommandInteraction) {
 		const guildId = interaction.guildId;
 		if (!guildId) {
-			await interaction.reply({ content: 'This command can only be used in a server.', flags: 64 });
+			await interaction.reply({
+				content: 'This command can only be used in a server.',
+				flags: 64,
+			});
 			return;
 		}
 

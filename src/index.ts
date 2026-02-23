@@ -1,15 +1,34 @@
-import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
+import {
+	Client,
+	Events,
+	GatewayIntentBits,
+	REST,
+	Routes,
+	type APIApplicationCommand,
+} from 'discord.js';
 
 import { commands } from '~/commands/index.ts';
 import { env } from '~/env';
+
+export const commandIds = new Map<string, string>();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once(Events.ClientReady, async (c) => {
 	const rest = new REST().setToken(env.BOT_TOKEN);
 	const body = [...commands.values()].map((cmd) => cmd.data.toJSON());
-	await rest.put(Routes.applicationGuildCommands(env.CLIENT_ID, env.GUILD_ID), { body });
-	console.log(`Logged in as ${c.user.tag} — ${body.length} commands registered`);
+	const registered = (await rest.put(
+		Routes.applicationGuildCommands(env.CLIENT_ID, env.GUILD_ID),
+		{
+			body,
+		},
+	)) as APIApplicationCommand[];
+
+	for (const cmd of registered) {
+		commandIds.set(cmd.name, cmd.id);
+	}
+
+	console.log(`Logged in as ${c.user.tag} — ${registered.length} commands registered`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

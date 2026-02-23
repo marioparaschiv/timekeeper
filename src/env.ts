@@ -10,7 +10,8 @@ export const env = {
 	GUILD_ID: required('GUILD_ID'),
 	HOURLY_RATE: (() => {
 		const rate = Number(required('HOURLY_RATE'));
-		if (!Number.isFinite(rate) || rate <= 0) throw new Error('HOURLY_RATE must be a positive number');
+		if (!Number.isFinite(rate) || rate <= 0)
+			throw new Error('HOURLY_RATE must be a positive number');
 		return rate;
 	})(),
 	SOLANA_ADDRESS: required('SOLANA_ADDRESS'),
