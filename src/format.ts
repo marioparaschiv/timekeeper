@@ -18,16 +18,21 @@ const dateFmt = new Intl.DateTimeFormat('en-GB', {
 	year: 'numeric',
 });
 
-export function formatInvoice(rows: Session[], now: Date): string {
-	let totalMs = 0;
-	const lines = rows.map((s) => {
-		const ms = (s.stoppedAt?.getTime() ?? now.getTime()) - s.startedAt.getTime();
-		totalMs += ms;
-		return `[${dateFmt.format(s.startedAt)} - ${formatDuration(ms)}](${s.stopMessageUrl ?? s.startMessageUrl})`;
-	});
-
+export function calculateInvoice(rows: Session[], now: Date) {
+	const totalMs = rows.reduce((sum, s) => sum + (s.stoppedAt?.getTime() ?? now.getTime()) - s.startedAt.getTime(), 0);
 	const totalHours = totalMs / 3_600_000;
 	const totalUsdc = Math.ceil(totalHours * env.HOURLY_RATE);
+
+	return { totalMs, totalUsdc };
+}
+
+export function formatInvoice(rows: Session[], now: Date): string {
+	const { totalMs, totalUsdc } = calculateInvoice(rows, now);
+
+	const lines = rows.map((s) => {
+		const ms = (s.stoppedAt?.getTime() ?? now.getTime()) - s.startedAt.getTime();
+		return `[${dateFmt.format(s.startedAt)} - ${formatDuration(ms)}](${s.stopMessageUrl ?? s.startMessageUrl})`;
+	});
 
 	lines.push(
 		'',

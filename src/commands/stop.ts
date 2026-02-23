@@ -53,6 +53,6 @@ export const stop = {
 			.set({ stoppedAt: now, stopMessageUrl })
 			.where(eq(sessions.id, active.id));
 
-		await editStartMessage(interaction.client, active.startMessageUrl);
+		editStartMessage(interaction.client, active.startMessageUrl);
 	},
 };

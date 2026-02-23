@@ -37,16 +37,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	const command = commands.get(interaction.commandName);
 	if (!command) return;
 
+	if (interaction.user.id !== env.OWNER_ID) {
+		await interaction.reply({
+			content: 'You are not authorized to use this bot.',
+			flags: 64,
+		});
+		return;
+	}
+
 	try {
 		await command.execute(interaction);
 	} catch (error) {
 		console.error(`Error executing /${interaction.commandName}:`, error);
-		const content = 'Something went wrong executing that command.';
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content, flags: 64 });
-		} else {
-			await interaction.reply({ content, flags: 64 });
-		}
+		try {
+			const content = 'Something went wrong executing that command.';
+			if (interaction.replied || interaction.deferred) {
+				await interaction.followUp({ content, flags: 64 });
+			} else {
+				await interaction.reply({ content, flags: 64 });
+			}
+		} catch {}
 	}
 });
 

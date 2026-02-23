@@ -15,4 +15,5 @@ export const env = {
 		return rate;
 	})(),
 	SOLANA_ADDRESS: required('SOLANA_ADDRESS'),
+	OWNER_ID: required('OWNER_ID'),
 };

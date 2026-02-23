@@ -36,6 +36,7 @@ export const preview = {
 			return;
 		}
 
-		await interaction.reply({ content: formatInvoice(rows, new Date()), flags: 64 });
+		const content = formatInvoice(rows, new Date());
+		await interaction.reply({ content, flags: 64 });
 	},
 };

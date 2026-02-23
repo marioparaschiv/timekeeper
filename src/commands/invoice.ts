@@ -2,7 +2,7 @@ import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.j
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
-import { formatDuration, formatInvoice } from '~/format.ts';
+import { calculateInvoice, formatDuration, formatInvoice } from '~/format.ts';
 import { billingCycles, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
@@ -22,7 +22,6 @@ export const invoice = {
 		}
 
 		const userId = interaction.user.id;
-
 		const active = await db
 			.select()
 			.from(sessions)
@@ -51,7 +50,7 @@ export const invoice = {
 				.set({ stoppedAt: now, stopMessageUrl })
 				.where(eq(sessions.id, active.id));
 
-			await editStartMessage(interaction.client, active.startMessageUrl);
+			editStartMessage(interaction.client, active.startMessageUrl);
 		}
 
 		const rows = await db
@@ -76,16 +75,21 @@ export const invoice = {
 		}
 
 		const now = new Date();
+		const content = formatInvoice(rows, now);
+		const { totalUsdc } = calculateInvoice(rows, now);
 
+		let cycleId!: string;
 		await db.transaction(async (tx) => {
 			const [cycle] = await tx
 				.insert(billingCycles)
-				.values({ guildId, closedAt: now })
+				.values({ guildId, totalUsdc, closedAt: now })
 				.returning();
+
+			cycleId = cycle!.id;
 
 			await tx
 				.update(sessions)
-				.set({ billingCycleId: cycle!.id })
+				.set({ billingCycleId: cycleId })
 				.where(
 					and(
 						eq(sessions.guildId, guildId),
@@ -95,11 +99,11 @@ export const invoice = {
 				);
 		});
 
-		const content = formatInvoice(rows, now);
+		const full = `${content}\n\nInvoice ID: \`${cycleId}\``;
 		if (active) {
-			await interaction.followUp({ content });
+			await interaction.followUp({ content: full });
 		} else {
-			await interaction.reply({ content });
+			await interaction.reply({ content: full });
 		}
 	},
 };
