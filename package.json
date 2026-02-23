@@ -1,7 +1,6 @@
 {
 	"name": "timekeeper",
-	"module": "src/index.ts",
-	"type": "module",
+	"main": "src/index.ts",
 	"private": true,
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
