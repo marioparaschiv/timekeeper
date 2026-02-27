@@ -5,6 +5,7 @@ import type {
 	SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 
+import { charge } from './charge.ts';
 import { invoice } from './invoice.ts';
 import { pending } from './pending.ts';
 import { preview } from './preview.ts';
@@ -20,6 +21,7 @@ export interface Command {
 export const commands = new Map<string, Command>([
 	[start.data.name, start],
 	[stop.data.name, stop],
+	[charge.data.name, charge],
 	[preview.data.name, preview],
 	[invoice.data.name, invoice],
 	[pending.data.name, pending],

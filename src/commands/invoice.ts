@@ -3,7 +3,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
 import { calculateInvoice, formatDuration, formatInvoice } from '~/format.ts';
-import { billingCycles, sessions } from '~/db/schema.ts';
+import { billingCycles, charges, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
 export const invoice = {
@@ -64,8 +64,19 @@ export const invoice = {
 				),
 			);
 
-		if (rows.length === 0) {
-			const content = 'No sessions to invoice.';
+		const chargeRows = await db
+			.select()
+			.from(charges)
+			.where(
+				and(
+					eq(charges.guildId, guildId),
+					eq(charges.userId, userId),
+					isNull(charges.billingCycleId),
+				),
+			);
+
+		if (rows.length === 0 && chargeRows.length === 0) {
+			const content = 'Nothing to invoice.';
 			if (active) {
 				await interaction.followUp({ content, flags: 64 });
 			} else {
@@ -75,8 +86,8 @@ export const invoice = {
 		}
 
 		const now = new Date();
-		const content = formatInvoice(rows, now);
-		const { totalUsdc } = calculateInvoice(rows, now);
+		const content = formatInvoice(rows, now, chargeRows);
+		const { totalUsdc } = calculateInvoice(rows, now, chargeRows);
 
 		let cycleId!: string;
 		await db.transaction(async (tx) => {
@@ -87,16 +98,31 @@ export const invoice = {
 
 			cycleId = cycle!.id;
 
-			await tx
-				.update(sessions)
-				.set({ billingCycleId: cycleId })
-				.where(
-					and(
-						eq(sessions.guildId, guildId),
-						eq(sessions.userId, userId),
-						isNull(sessions.billingCycleId),
-					),
-				);
+			if (rows.length > 0) {
+				await tx
+					.update(sessions)
+					.set({ billingCycleId: cycleId })
+					.where(
+						and(
+							eq(sessions.guildId, guildId),
+							eq(sessions.userId, userId),
+							isNull(sessions.billingCycleId),
+						),
+					);
+			}
+
+			if (chargeRows.length > 0) {
+				await tx
+					.update(charges)
+					.set({ billingCycleId: cycleId })
+					.where(
+						and(
+							eq(charges.guildId, guildId),
+							eq(charges.userId, userId),
+							isNull(charges.billingCycleId),
+						),
+					);
+			}
 		});
 
 		const full = `${content}\n\nInvoice ID: \`${cycleId}\``;

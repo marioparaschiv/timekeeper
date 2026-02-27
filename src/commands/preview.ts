@@ -2,7 +2,7 @@ import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.j
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { formatInvoice } from '~/format.ts';
-import { sessions } from '~/db/schema.ts';
+import { charges, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
 export const preview = {
@@ -20,23 +20,36 @@ export const preview = {
 			return;
 		}
 
+		const userId = interaction.user.id;
+
 		const rows = await db
 			.select()
 			.from(sessions)
 			.where(
 				and(
 					eq(sessions.guildId, guildId),
-					eq(sessions.userId, interaction.user.id),
+					eq(sessions.userId, userId),
 					isNull(sessions.billingCycleId),
 				),
 			);
 
-		if (rows.length === 0) {
-			await interaction.reply({ content: 'No sessions to invoice.', flags: 64 });
+		const chargeRows = await db
+			.select()
+			.from(charges)
+			.where(
+				and(
+					eq(charges.guildId, guildId),
+					eq(charges.userId, userId),
+					isNull(charges.billingCycleId),
+				),
+			);
+
+		if (rows.length === 0 && chargeRows.length === 0) {
+			await interaction.reply({ content: 'Nothing to invoice.', flags: 64 });
 			return;
 		}
 
-		const content = formatInvoice(rows, new Date());
+		const content = formatInvoice(rows, new Date(), chargeRows);
 		await interaction.reply({ content, flags: 64 });
 	},
 };

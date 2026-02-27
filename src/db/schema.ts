@@ -8,6 +8,16 @@ export const billingCycles = sqliteTable('billing_cycles', {
 	settledAt: integer('settled_at', { mode: 'timestamp_ms' }),
 });
 
+export const charges = sqliteTable('charges', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	guildId: text('guild_id').notNull(),
+	userId: text('user_id').notNull(),
+	billingCycleId: text('billing_cycle_id').references(() => billingCycles.id),
+	amountCents: integer('amount_cents').notNull(),
+	description: text('description').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export const sessions = sqliteTable('sessions', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	guildId: text('guild_id').notNull(),
