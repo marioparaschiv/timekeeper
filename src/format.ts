@@ -1,4 +1,5 @@
 import type { InferSelectModel } from 'drizzle-orm';
+import { EmbedBuilder } from 'discord.js';
 
 import type { charges, sessions } from '~/db/schema.ts';
 import { env } from '~/env.ts';
@@ -28,7 +29,7 @@ export function calculateInvoice(rows: Session[], now: Date, chargeRows: Charge[
 	return { totalMs, totalUsdc };
 }
 
-export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): string {
+export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
 	const { totalMs, totalUsdc } = calculateInvoice(rows, now, chargeRows);
 
 	const lines = rows.map((s) => {
@@ -40,15 +41,12 @@ export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] =
 		lines.push(`${c.description} — $${(c.amountCents / 100).toFixed(2)}`);
 	}
 
-	lines.push(
-		'',
-		`Total Time: ${formatDuration(totalMs)}`,
-		`Invoice Date: ${dateFmt.format(now)}`,
-		'',
-		`**Total: ${totalUsdc} USDC**`,
-		'',
-		`**USDC/Solana Address**: ${env.SOLANA_ADDRESS}`,
-	);
-
-	return lines.join('\n');
+	return new EmbedBuilder()
+		.setDescription(lines.join('\n'))
+		.addFields(
+			{ name: 'Total Time', value: formatDuration(totalMs), inline: true },
+			{ name: 'Invoice Date', value: dateFmt.format(now), inline: true },
+			{ name: 'Total', value: `${totalUsdc} USDC` },
+			{ name: 'USDC/Solana Address', value: env.SOLANA_ADDRESS },
+		);
 }

@@ -49,7 +49,7 @@ export const preview = {
 			return;
 		}
 
-		const content = formatInvoice(rows, new Date(), chargeRows);
-		await interaction.reply({ content, flags: 64 });
+		const embed = formatInvoice(rows, new Date(), chargeRows);
+		await interaction.reply({ embeds: [embed], flags: 64 });
 	},
 };

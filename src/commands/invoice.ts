@@ -86,7 +86,7 @@ export const invoice = {
 		}
 
 		const now = new Date();
-		const content = formatInvoice(rows, now, chargeRows);
+		const embed = formatInvoice(rows, now, chargeRows);
 		const { totalUsdc } = calculateInvoice(rows, now, chargeRows);
 
 		let cycleId!: string;
@@ -125,11 +125,12 @@ export const invoice = {
 			}
 		});
 
-		const full = `${content}\n\nInvoice ID: \`${cycleId}\``;
+		embed.setFooter({ text: `Invoice ID: ${cycleId}` });
+		const payload = { embeds: [embed] };
 		if (active) {
-			await interaction.followUp({ content: full });
+			await interaction.followUp(payload);
 		} else {
-			await interaction.reply({ content: full });
+			await interaction.reply(payload);
 		}
 	},
 };
