@@ -37,16 +37,21 @@ export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] =
 		return `[${dateFmt.format(s.startedAt)} - ${formatDuration(ms)}](${s.stopMessageUrl ?? s.startMessageUrl})`;
 	});
 
+	if (rows.length > 0 && chargeRows.length > 0) lines.push('');
+
 	for (const c of chargeRows) {
 		lines.push(`${c.description} — $${(c.amountCents / 100).toFixed(2)}`);
 	}
 
+	const titleDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+
 	return new EmbedBuilder()
+		.setTitle(`Invoice - ${titleDate}`)
+		.setColor(0x8ac1ce)
 		.setDescription(lines.join('\n'))
 		.addFields(
 			{ name: 'Total Time', value: formatDuration(totalMs), inline: true },
-			{ name: 'Invoice Date', value: dateFmt.format(now), inline: true },
-			{ name: 'Total', value: `${totalUsdc} USDC` },
+			{ name: 'Total', value: `${totalUsdc} USDC`, inline: true },
 			{ name: 'USDC/Solana Address', value: env.SOLANA_ADDRESS },
 		);
 }
