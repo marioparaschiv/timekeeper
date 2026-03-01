@@ -1,7 +1,7 @@
 {
 	"name": "timekeeper",
-	"main": "src/index.ts",
 	"private": true,
+	"main": "src/index.ts",
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"deploy": "bun src/deploy.ts",
@@ -9,7 +9,12 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
 		"lint": "oxlint --type-aware --config .oxlintrc.json --fix-dangerously src",
-		"fmt": "oxfmt --config .oxfmtrc.json src"
+		"fmt": "oxfmt --config .oxfmtrc.json src",
+		"typecheck": "tsgo --noEmit"
+	},
+	"dependencies": {
+		"discord.js": "14.25.1",
+		"drizzle-orm": "0.45.1"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -20,12 +25,5 @@
 		"oxfmt": "^0.34.0",
 		"oxlint": "^1.49.0",
 		"oxlint-tsgolint": "^0.14.2"
-	},
-	"peerDependencies": {
-		"typescript": "^5"
-	},
-	"dependencies": {
-		"discord.js": "14.25.1",
-		"drizzle-orm": "0.45.1"
 	}
 }

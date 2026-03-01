@@ -18,9 +18,6 @@
         "oxlint": "^1.49.0",
         "oxlint-tsgolint": "^0.14.2",
       },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
     },
   },
   "packages": {

@@ -21,7 +21,10 @@ const dateFmt = new Intl.DateTimeFormat('en-GB', {
 });
 
 export function calculateInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []) {
-	const totalMs = rows.reduce((sum, s) => sum + (s.stoppedAt?.getTime() ?? now.getTime()) - s.startedAt.getTime(), 0);
+	const totalMs = rows.reduce(
+		(sum, s) => sum + (s.stoppedAt?.getTime() ?? now.getTime()) - s.startedAt.getTime(),
+		0,
+	);
 	const totalHours = totalMs / 3_600_000;
 	const chargeDollars = chargeRows.reduce((sum, c) => sum + c.amountCents, 0) / 100;
 	const totalUsdc = Math.ceil(totalHours * env.HOURLY_RATE + chargeDollars);
@@ -43,7 +46,7 @@ export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] =
 		lines.push(`${c.description} — $${(c.amountCents / 100).toFixed(2)}`);
 	}
 
-	const titleDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+	const titleDate = dateFmt.format(now);
 
 	return new EmbedBuilder()
 		.setTitle(`Invoice - ${titleDate}`)
