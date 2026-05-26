@@ -1,0 +1,36 @@
+{
+	"name": "timekeeper",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"dev": "tsdown --watch --on-success \"node --env-file=.env dist/index.js\"",
+		"build": "tsdown",
+		"start": "node --env-file=.env dist/index.js",
+		"deploy": "tsdown && node --env-file=.env dist/deploy.js",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"lint": "oxlint --type-aware --config .oxlintrc.json --fix-dangerously src",
+		"fmt": "oxfmt --config .oxfmtrc.json src",
+		"typecheck": "tsgo --noEmit"
+	},
+	"dependencies": {
+		"better-sqlite3": "12.10.0",
+		"discord.js": "14.26.4",
+		"drizzle-orm": "0.45.2"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.13",
+		"@typescript/native-preview": "7.0.0-dev.20260524.1",
+		"drizzle-kit": "0.31.10",
+		"eslint-plugin-perfectionist": "^5.9.0",
+		"oxfmt": "^0.51.0",
+		"oxlint": "^1.66.0",
+		"oxlint-tsgolint": "^0.23.0",
+		"tsdown": "^0.10.0"
+	}
+}
