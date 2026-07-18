@@ -38,7 +38,7 @@ export function settleButton(cycleId: string): ActionRowBuilder<ButtonBuilder> {
 	return new ActionRowBuilder<ButtonBuilder>().addComponents(
 		new ButtonBuilder()
 			.setCustomId(`${SETTLE_BUTTON_PREFIX}:${cycleId}`)
-			.setLabel('Invoice Settled')
+			.setLabel('Mark as Settled')
 			.setStyle(ButtonStyle.Success),
 	);
 }
