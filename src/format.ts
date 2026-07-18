@@ -46,10 +46,7 @@ export function settleButton(cycleId: string): ActionRowBuilder<ButtonBuilder> {
 export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder {
 	return EmbedBuilder.from(embed.toJSON())
 		.setColor(0x57f287)
-		.addFields({
-			name: 'Settled',
-			value: `<t:${Math.floor(settledAt.getTime() / 1000)}:D>`,
-		});
+		.addFields({ name: 'Settled', value: dateFmt.format(settledAt) });
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
