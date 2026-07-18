@@ -7,8 +7,12 @@ export const charge = {
 	data: new SlashCommandBuilder()
 		.setName('charge')
 		.setDescription('Add a flat USD charge to the next invoice')
-		.addNumberOption((o) => o.setName('amount').setDescription('Amount in USD (e.g. 25.50)').setRequired(true))
-		.addStringOption((o) => o.setName('description').setDescription('What the charge is for').setRequired(true)),
+		.addNumberOption((o) =>
+			o.setName('amount').setDescription('Amount in USD (e.g. 25.50)').setRequired(true),
+		)
+		.addStringOption((o) =>
+			o.setName('description').setDescription('What the charge is for').setRequired(true),
+		),
 
 	async execute(interaction: ChatInputCommandInteraction) {
 		const guildId = interaction.guildId;

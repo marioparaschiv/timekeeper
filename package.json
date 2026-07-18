@@ -7,12 +7,14 @@
 		"node": ">=22"
 	},
 	"scripts": {
-		"dev": "tsdown --watch --on-success \"node --env-file=.env dist/index.js\"",
+		"dev": "tsdown --watch src --on-success \"node --env-file=.env dist/index.js\"",
+		"dev:sim": "tsdown --watch src --on-success \"node --env-file=.env.sim dist/index.js\"",
 		"build": "tsdown",
 		"start": "node --env-file=.env dist/index.js",
+		"start:sim": "node --env-file=.env.sim dist/index.js",
 		"deploy": "tsdown && node --env-file=.env dist/deploy.js",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "tsdown && node --env-file=.env dist/migrate.js",
 		"db:push": "drizzle-kit push",
 		"lint": "oxlint --type-aware --config .oxlintrc.json --fix-dangerously src",
 		"fmt": "oxfmt --config .oxfmtrc.json src",

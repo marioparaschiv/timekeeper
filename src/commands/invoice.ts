@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
+import { calculateInvoice, formatDuration, formatInvoice, settleButton } from '~/format.ts';
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
-import { calculateInvoice, formatDuration, formatInvoice } from '~/format.ts';
 import { billingCycles, charges, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
@@ -22,7 +22,7 @@ export const invoice = {
 		}
 
 		const userId = interaction.user.id;
-		const active = await db
+		const active = db
 			.select()
 			.from(sessions)
 			.where(
@@ -42,6 +42,7 @@ export const invoice = {
 			const reply = await interaction.reply({
 				content: `[Session stopped](${active.startMessageUrl}). ${discordTimestamp(active.startedAt, 't')} - ${discordTimestamp(now, 't')} (${duration})`,
 			});
+
 			const message = await reply.fetch();
 			const stopMessageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
 
@@ -89,18 +90,23 @@ export const invoice = {
 		const embed = formatInvoice(rows, now, chargeRows);
 		const { totalUsdc } = calculateInvoice(rows, now, chargeRows);
 
-		let cycleId!: string;
-		await db.transaction(async (tx) => {
-			const [cycle] = await tx
-				.insert(billingCycles)
-				.values({ guildId, totalUsdc, closedAt: now })
-				.returning();
+		const cycleId = crypto.randomUUID();
+		embed.setFooter({ text: `Invoice ID: ${cycleId}` });
 
-			cycleId = cycle!.id;
+		const payload = { embeds: [embed], components: [settleButton(cycleId)] };
+		const invoiceMessage = active
+			? await interaction.followUp(payload)
+			: await (await interaction.reply(payload)).fetch();
+
+		const invoiceMessageUrl = `https://discord.com/channels/${guildId}/${invoiceMessage.channelId}/${invoiceMessage.id}`;
+
+		db.transaction((tx) => {
+			tx.insert(billingCycles)
+				.values({ id: cycleId, guildId, totalUsdc, closedAt: now, invoiceMessageUrl })
+				.run();
 
 			if (rows.length > 0) {
-				await tx
-					.update(sessions)
+				tx.update(sessions)
 					.set({ billingCycleId: cycleId })
 					.where(
 						and(
@@ -108,12 +114,12 @@ export const invoice = {
 							eq(sessions.userId, userId),
 							isNull(sessions.billingCycleId),
 						),
-					);
+					)
+					.run();
 			}
 
 			if (chargeRows.length > 0) {
-				await tx
-					.update(charges)
+				tx.update(charges)
 					.set({ billingCycleId: cycleId })
 					.where(
 						and(
@@ -121,16 +127,9 @@ export const invoice = {
 							eq(charges.userId, userId),
 							isNull(charges.billingCycleId),
 						),
-					);
+					)
+					.run();
 			}
 		});
-
-		embed.setFooter({ text: `Invoice ID: ${cycleId}` });
-		const payload = { embeds: [embed] };
-		if (active) {
-			await interaction.followUp(payload);
-		} else {
-			await interaction.reply(payload);
-		}
 	},
 };

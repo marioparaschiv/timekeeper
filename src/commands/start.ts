@@ -24,7 +24,7 @@ export const start = {
 			return;
 		}
 
-		const active = await db
+		const active = db
 			.select()
 			.from(sessions)
 			.where(

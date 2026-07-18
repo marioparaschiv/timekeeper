@@ -1,7 +1,8 @@
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import type { InferSelectModel } from 'drizzle-orm';
-import { EmbedBuilder } from 'discord.js';
 
-import type { charges, sessions } from '~/db/schema.ts';
+import type { billingCycles, charges, sessions } from '~/db/schema.ts';
+import { discordTimestamp } from '~/messages.ts';
 import { env } from '~/env.ts';
 
 export function formatDuration(ms: number): string {
@@ -30,6 +31,95 @@ export function calculateInvoice(rows: Session[], now: Date, chargeRows: Charge[
 	const totalUsdc = Math.ceil(totalHours * env.HOURLY_RATE + chargeDollars);
 
 	return { totalMs, totalUsdc };
+}
+
+export const SETTLE_BUTTON_PREFIX = 'settle';
+
+export function settleButton(cycleId: string): ActionRowBuilder<ButtonBuilder> {
+	return new ActionRowBuilder<ButtonBuilder>().addComponents(
+		new ButtonBuilder()
+			.setCustomId(`${SETTLE_BUTTON_PREFIX}:${cycleId}`)
+			.setLabel('Mark as Settled')
+			.setStyle(ButtonStyle.Success),
+	);
+}
+
+export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder {
+	return EmbedBuilder.from(embed.toJSON())
+		.setColor(0x57f287)
+		.addFields({ name: 'Settled', value: dateFmt.format(settledAt) });
+}
+
+type BillingCycle = InferSelectModel<typeof billingCycles>;
+
+function invoiceLine(cycle: BillingCycle): string {
+	const settled = cycle.settledAt
+		? ` · Settled ${discordTimestamp(cycle.settledAt, 'D')}`
+		: '';
+
+	return `[\`${cycle.id.slice(0, 8)}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC\nInvoiced ${discordTimestamp(cycle.closedAt, 'D')}${settled}`;
+}
+
+function total(cycles: BillingCycle[]): number {
+	return cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+}
+
+const DESCRIPTION_LIMIT = 4096;
+
+/**
+ * Oldest first, so the most recent invoice sits at the bottom. Anything that
+ * would overflow is dropped from the top and summarised there instead.
+ */
+function invoiceSection(
+	heading: string,
+	shown: BillingCycle[],
+	budget: number,
+	sectionTotal: number,
+	hidden = 0,
+): string {
+	const header = `### ${heading} · ${sectionTotal} USDC`;
+	const lines = shown.map(invoiceLine);
+
+	while (lines.length > 0) {
+		const omitted = hidden + (shown.length - lines.length);
+		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n` : '';
+		const section = `${header}\n${notice}${lines.join('\n\n')}`;
+
+		if (section.length <= budget) return section;
+
+		lines.shift();
+	}
+
+	return `${header}\n*${shown.length + hidden} invoices*`;
+}
+
+export function formatInvoices(
+	cycles: BillingCycle[],
+	{ settledLimit }: { settledLimit?: number } = {},
+): EmbedBuilder {
+	const ordered = [...cycles].sort((a, b) => a.closedAt.getTime() - b.closedAt.getTime());
+	const settledAll = ordered.filter((cycle) => cycle.settledAt);
+	const unsettled = ordered.filter((cycle) => !cycle.settledAt);
+
+	const settled =
+		settledLimit === undefined ? settledAll : settledAll.slice(-settledLimit);
+	const hidden = settledAll.length - settled.length;
+
+	const sections: string[] = [];
+
+	if (settled.length > 0) {
+		sections.push(invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2, total(settledAll), hidden));
+	}
+
+	if (unsettled.length > 0) {
+		const used = sections.reduce((sum, section) => sum + section.length, 0);
+		sections.push(invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4, total(unsettled)));
+	}
+
+	return new EmbedBuilder()
+		.setTitle(`Invoices · ${cycles.length}`)
+		.setColor(0x8ac1ce)
+		.setDescription(sections.join('\n'));
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {

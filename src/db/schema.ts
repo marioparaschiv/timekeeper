@@ -1,11 +1,15 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const billingCycles = sqliteTable('billing_cycles', {
-	id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
 	guildId: text('guild_id').notNull(),
 	totalUsdc: integer('total_usdc').notNull(),
 	closedAt: integer('closed_at', { mode: 'timestamp_ms' }).notNull(),
 	settledAt: integer('settled_at', { mode: 'timestamp_ms' }),
+	invoiceMessageUrl: text('invoice_message_url').notNull(),
+	lastReminderAt: integer('last_reminder_at', { mode: 'timestamp_ms' }),
 });
 
 export const charges = sqliteTable('charges', {

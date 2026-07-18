@@ -18,11 +18,7 @@ export const settled = {
 	async execute(interaction: ChatInputCommandInteraction) {
 		const invoiceId = interaction.options.getString('invoice', true);
 
-		const cycle = await db
-			.select()
-			.from(billingCycles)
-			.where(eq(billingCycles.id, invoiceId))
-			.get();
+		const cycle = db.select().from(billingCycles).where(eq(billingCycles.id, invoiceId)).get();
 
 		if (!cycle) {
 			await interaction.reply({ content: `No invoice with ID \`${invoiceId}\`.`, flags: 64 });
@@ -44,7 +40,7 @@ export const settled = {
 			.where(eq(billingCycles.id, invoiceId));
 
 		await interaction.reply({
-			content: `Invoice \`${invoiceId}\` — ${cycle.totalUsdc} USDC — marked as settled.`,
+			content: `Invoice \`${invoiceId}\` (${cycle.totalUsdc} USDC) marked as settled.`,
 			flags: 64,
 		});
 	},
