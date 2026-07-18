@@ -1,6 +1,6 @@
 import type { Client } from 'discord.js';
 
-export function discordTimestamp(date: Date, style: 'R' | 't' | 'T' | 'f' = 'R') {
+export function discordTimestamp(date: Date, style: 'R' | 'D' | 'd' | 't' | 'T' | 'f' = 'R') {
 	return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`;
 }
 

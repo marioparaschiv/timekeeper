@@ -53,9 +53,11 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 type BillingCycle = InferSelectModel<typeof billingCycles>;
 
 function invoiceLine(cycle: BillingCycle): string {
-	const settled = cycle.settledAt ? ` · Settled ${discordTimestamp(cycle.settledAt)}` : '';
+	const settled = cycle.settledAt
+		? ` · Settled ${discordTimestamp(cycle.settledAt, 'D')}`
+		: '';
 
-	return `[\`${cycle.id.slice(0, 8)}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC\nInvoiced ${discordTimestamp(cycle.closedAt)}${settled}`;
+	return `[\`${cycle.id.slice(0, 8)}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC\nInvoiced ${discordTimestamp(cycle.closedAt, 'D')}${settled}`;
 }
 
 function total(cycles: BillingCycle[]): number {
@@ -68,13 +70,19 @@ const DESCRIPTION_LIMIT = 4096;
  * Oldest first, so the most recent invoice sits at the bottom. Anything that
  * would overflow is dropped from the top and summarised there instead.
  */
-function invoiceSection(heading: string, cycles: BillingCycle[], budget: number): string {
-	const header = `### ${heading} · ${total(cycles)} USDC`;
-	const lines = cycles.map(invoiceLine);
+function invoiceSection(
+	heading: string,
+	shown: BillingCycle[],
+	budget: number,
+	sectionTotal: number,
+	hidden = 0,
+): string {
+	const header = `### ${heading} · ${sectionTotal} USDC`;
+	const lines = shown.map(invoiceLine);
 
 	while (lines.length > 0) {
-		const omitted = cycles.length - lines.length;
-		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n\n` : '';
+		const omitted = hidden + (shown.length - lines.length);
+		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n` : '';
 		const section = `${header}\n${notice}${lines.join('\n\n')}`;
 
 		if (section.length <= budget) return section;
@@ -82,23 +90,30 @@ function invoiceSection(heading: string, cycles: BillingCycle[], budget: number)
 		lines.shift();
 	}
 
-	return `${header}\n\n*${cycles.length} invoices*`;
+	return `${header}\n*${shown.length + hidden} invoices*`;
 }
 
-export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
+export function formatInvoices(
+	cycles: BillingCycle[],
+	{ settledLimit }: { settledLimit?: number } = {},
+): EmbedBuilder {
 	const ordered = [...cycles].sort((a, b) => a.closedAt.getTime() - b.closedAt.getTime());
-	const settled = ordered.filter((cycle) => cycle.settledAt);
+	const settledAll = ordered.filter((cycle) => cycle.settledAt);
 	const unsettled = ordered.filter((cycle) => !cycle.settledAt);
+
+	const settled =
+		settledLimit === undefined ? settledAll : settledAll.slice(-settledLimit);
+	const hidden = settledAll.length - settled.length;
 
 	const sections: string[] = [];
 
 	if (settled.length > 0) {
-		sections.push(invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2));
+		sections.push(invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2, total(settledAll), hidden));
 	}
 
 	if (unsettled.length > 0) {
 		const used = sections.reduce((sum, section) => sum + section.length, 0);
-		sections.push(invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4));
+		sections.push(invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4, total(unsettled)));
 	}
 
 	return new EmbedBuilder()
