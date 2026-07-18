@@ -12,7 +12,7 @@
 		"start": "node --env-file=.env dist/index.js",
 		"deploy": "tsdown && node --env-file=.env dist/deploy.js",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "tsdown && node --env-file=.env dist/migrate.js",
 		"db:push": "drizzle-kit push",
 		"lint": "oxlint --type-aware --config .oxlintrc.json --fix-dangerously src",
 		"fmt": "oxfmt --config .oxfmtrc.json src",

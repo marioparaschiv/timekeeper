@@ -22,7 +22,7 @@ export const invoice = {
 		}
 
 		const userId = interaction.user.id;
-		const active = await db
+		const active = db
 			.select()
 			.from(sessions)
 			.where(
@@ -101,14 +101,12 @@ export const invoice = {
 		const invoiceMessageUrl = `https://discord.com/channels/${guildId}/${invoiceMessage.channelId}/${invoiceMessage.id}`;
 
 		db.transaction((tx) => {
-			tx
-				.insert(billingCycles)
+			tx.insert(billingCycles)
 				.values({ id: cycleId, guildId, totalUsdc, closedAt: now, invoiceMessageUrl })
 				.run();
 
 			if (rows.length > 0) {
-				tx
-					.update(sessions)
+				tx.update(sessions)
 					.set({ billingCycleId: cycleId })
 					.where(
 						and(
@@ -121,8 +119,7 @@ export const invoice = {
 			}
 
 			if (chargeRows.length > 0) {
-				tx
-					.update(charges)
+				tx.update(charges)
 					.set({ billingCycleId: cycleId })
 					.where(
 						and(
