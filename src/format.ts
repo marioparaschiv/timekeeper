@@ -69,13 +69,13 @@ const DESCRIPTION_LIMIT = 4096;
  * would overflow is dropped from the top and summarised there instead.
  */
 function invoiceSection(heading: string, cycles: BillingCycle[], budget: number): string {
-	const header = `**${heading} · ${total(cycles)} USDC**`;
+	const header = `### ${heading} · ${total(cycles)} USDC`;
 	const lines = cycles.map(invoiceLine);
 
 	while (lines.length > 0) {
 		const omitted = cycles.length - lines.length;
 		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n\n` : '';
-		const section = `${header}\n\n${notice}${lines.join('\n\n')}`;
+		const section = `${header}\n${notice}${lines.join('\n\n')}`;
 
 		if (section.length <= budget) return section;
 
