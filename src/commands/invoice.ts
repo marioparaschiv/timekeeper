@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
+import { calculateInvoice, formatDuration, formatInvoice, settleButton } from '~/format.ts';
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
-import { calculateInvoice, formatDuration, formatInvoice } from '~/format.ts';
 import { billingCycles, charges, sessions } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
@@ -42,6 +42,7 @@ export const invoice = {
 			const reply = await interaction.reply({
 				content: `[Session stopped](${active.startMessageUrl}). ${discordTimestamp(active.startedAt, 't')} - ${discordTimestamp(now, 't')} (${duration})`,
 			});
+
 			const message = await reply.fetch();
 			const stopMessageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
 
@@ -89,14 +90,20 @@ export const invoice = {
 		const embed = formatInvoice(rows, now, chargeRows);
 		const { totalUsdc } = calculateInvoice(rows, now, chargeRows);
 
-		let cycleId!: string;
-		await db.transaction(async (tx) => {
-			const [cycle] = await tx
-				.insert(billingCycles)
-				.values({ guildId, totalUsdc, closedAt: now })
-				.returning();
+		const cycleId = crypto.randomUUID();
+		embed.setFooter({ text: `Invoice ID: ${cycleId}` });
 
-			cycleId = cycle!.id;
+		const payload = { embeds: [embed], components: [settleButton(cycleId)] };
+		const invoiceMessage = active
+			? await interaction.followUp(payload)
+			: await (await interaction.reply(payload)).fetch();
+
+		const invoiceMessageUrl = `https://discord.com/channels/${guildId}/${invoiceMessage.channelId}/${invoiceMessage.id}`;
+
+		await db.transaction(async (tx) => {
+			await tx
+				.insert(billingCycles)
+				.values({ id: cycleId, guildId, totalUsdc, closedAt: now, invoiceMessageUrl });
 
 			if (rows.length > 0) {
 				await tx
@@ -124,13 +131,5 @@ export const invoice = {
 					);
 			}
 		});
-
-		embed.setFooter({ text: `Invoice ID: ${cycleId}` });
-		const payload = { embeds: [embed] };
-		if (active) {
-			await interaction.followUp(payload);
-		} else {
-			await interaction.reply(payload);
-		}
 	},
 };

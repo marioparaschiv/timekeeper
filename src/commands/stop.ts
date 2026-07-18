@@ -21,7 +21,7 @@ export const stop = {
 			return;
 		}
 
-		const active = await db
+		const active = db
 			.select()
 			.from(sessions)
 			.where(
@@ -45,6 +45,7 @@ export const stop = {
 		const reply = await interaction.reply({
 			content: `[Session stopped](${active.startMessageUrl}). ${discordTimestamp(active.startedAt, 't')} - ${discordTimestamp(now, 't')} (${duration})`,
 		});
+
 		const message = await reply.fetch();
 		const stopMessageUrl = `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`;
 

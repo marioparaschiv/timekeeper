@@ -10,10 +10,7 @@ export const pending = {
 		.setDescription('List all unsettled invoices'),
 
 	async execute(interaction: ChatInputCommandInteraction) {
-		const rows = await db
-			.select()
-			.from(billingCycles)
-			.where(isNull(billingCycles.settledAt));
+		const rows = await db.select().from(billingCycles).where(isNull(billingCycles.settledAt));
 
 		if (rows.length === 0) {
 			await interaction.reply({ content: 'No pending invoices.', flags: 64 });

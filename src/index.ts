@@ -7,7 +7,9 @@ import {
 	type APIApplicationCommand,
 } from 'discord.js';
 
+import { startReminders } from '~/reminders.ts';
 import { commands } from '~/commands/index.ts';
+import { handleButton } from '~/buttons.ts';
 import { env } from '~/env';
 
 export const commandIds = new Map<string, string>();
@@ -29,13 +31,12 @@ client.once(Events.ClientReady, async (c) => {
 	}
 
 	console.log(`Logged in as ${c.user.tag} — ${registered.length} commands registered`);
+
+	startReminders(c);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-	if (!interaction.isChatInputCommand()) return;
-
-	const command = commands.get(interaction.commandName);
-	if (!command) return;
+	if (!interaction.isChatInputCommand() && !interaction.isButton()) return;
 
 	if (interaction.user.id !== env.OWNER_ID) {
 		await interaction.reply({
@@ -45,10 +46,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		return;
 	}
 
+	const label = interaction.isButton()
+		? `button ${interaction.customId}`
+		: `/${interaction.commandName}`;
+
 	try {
+		if (interaction.isButton()) {
+			await handleButton(interaction);
+			return;
+		}
+
+		const command = commands.get(interaction.commandName);
+		if (!command) return;
+
 		await command.execute(interaction);
 	} catch (error) {
-		console.error(`Error executing /${interaction.commandName}:`, error);
+		console.error(`Error executing ${label}:`, error);
 		try {
 			const content = 'Something went wrong executing that command.';
 			if (interaction.replied || interaction.deferred) {

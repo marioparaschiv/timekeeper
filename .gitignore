@@ -4,6 +4,9 @@ dist/
 # Database
 *.db*
 
+# One-off local scripts
+scripts/
+
 # Logs
 logs
 *.log

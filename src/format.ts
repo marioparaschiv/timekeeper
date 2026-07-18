@@ -1,5 +1,5 @@
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import type { InferSelectModel } from 'drizzle-orm';
-import { EmbedBuilder } from 'discord.js';
 
 import type { charges, sessions } from '~/db/schema.ts';
 import { env } from '~/env.ts';
@@ -30,6 +30,26 @@ export function calculateInvoice(rows: Session[], now: Date, chargeRows: Charge[
 	const totalUsdc = Math.ceil(totalHours * env.HOURLY_RATE + chargeDollars);
 
 	return { totalMs, totalUsdc };
+}
+
+export const SETTLE_BUTTON_PREFIX = 'settle';
+
+export function settleButton(cycleId: string): ActionRowBuilder<ButtonBuilder> {
+	return new ActionRowBuilder<ButtonBuilder>().addComponents(
+		new ButtonBuilder()
+			.setCustomId(`${SETTLE_BUTTON_PREFIX}:${cycleId}`)
+			.setLabel('Invoice Settled')
+			.setStyle(ButtonStyle.Success),
+	);
+}
+
+export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder {
+	return EmbedBuilder.from(embed.toJSON())
+		.setColor(0x57f287)
+		.addFields({
+			name: 'Settled',
+			value: `<t:${Math.floor(settledAt.getTime() / 1000)}:D>`,
+		});
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
