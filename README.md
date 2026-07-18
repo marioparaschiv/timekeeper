@@ -23,7 +23,7 @@ The bot is single-tenant by design. Only the configured owner can run commands, 
 * Flat charges for fixed-fee items mixed into the same invoice
 * Invoice preview before you commit to closing a cycle
 * Per-server billing isolation so multiple clients stay separate
-* Settlement tracking with a list of pending invoices and a way to mark them paid
+* Settlement tracking with a one-click button and reminders for unpaid invoices
 * Discord-native output using rich embeds and timestamps
 * SQLite storage through Drizzle ORM with a single local database file
 
@@ -36,8 +36,12 @@ The bot is single-tenant by design. Only the configured owner can run commands, 
 | `/charge <amount> <description>` | Add a flat USD charge to the next invoice |
 | `/preview` | Show what the current invoice looks like without closing it |
 | `/invoice` | Close the billing cycle, post the invoice, and start a fresh one |
-| `/pending-invoices` | List every invoice that has not yet been settled |
+| `/invoices [all]` | List invoices grouped by settled and unsettled |
 | `/settled <invoice>` | Mark an invoice as paid |
+
+Closed invoices carry a **Mark as Settled** button that only the owner can use. Clicking it records the settlement date, turns the embed green, and removes the button. Anything still unsettled five days after it was invoiced gets a reminder in the channel it was posted in, repeating every five days until it is settled.
+
+`/invoices` shows the last five settled invoices to keep the message readable. Pass `all: true` to include the rest. Unsettled invoices are always listed in full, and the totals cover every invoice whether or not it is shown.
 
 ## Recommended channel layout
 
@@ -96,14 +100,17 @@ OWNER_ID=your-discord-user-id
 | `HOURLY_RATE` | Your rate in USD per hour (e.g. `75`) |
 | `SOLANA_ADDRESS` | USDC/Solana address shown on invoices |
 | `OWNER_ID` | Your Discord user ID. Only this user can run commands |
+| `DATABASE_PATH` | Optional. SQLite file to use, defaults to `timekeeper.db` |
 
 ### Database
 
-Initialize the SQLite database before the first run:
+Apply migrations before the first run:
 
 ```sh
-pnpm db:push
+pnpm db:migrate
 ```
+
+This uses a custom runner rather than `drizzle-kit migrate`. drizzle wraps each migration in a transaction, and SQLite ignores `PRAGMA foreign_keys=OFF` inside one, so any migration that rebuilds a table other tables reference fails on the `DROP TABLE`. The runner reads the same journal and hashes files identically, so `__drizzle_migrations` records stay compatible.
 
 ### Running
 
@@ -141,11 +148,14 @@ pm2 start pm2.config.js
 src/
   commands/        Slash command handlers
   db/              Drizzle schema and client
+  buttons.ts       Button interaction handling
   deploy.ts        One-off command registration script
   env.ts           Environment variable parsing
   format.ts        Invoice math and embed formatting
   index.ts         Bot entrypoint
   messages.ts      Discord message helpers
+  migrate.ts       Migration runner
+  reminders.ts     Unsettled invoice reminders
 ```
 
 ## License
