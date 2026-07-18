@@ -127,11 +127,11 @@ pnpm build
 pnpm start
 ```
 
-A `pm2.config.js` is included if you want to run Timekeeper as a managed process:
+A `pm2.config.cjs` is included if you want to run Timekeeper as a managed process:
 
 ```sh
 pnpm build
-pm2 start pm2.config.js
+pm2 start pm2.config.cjs
 ```
 
 ## Tech Stack
