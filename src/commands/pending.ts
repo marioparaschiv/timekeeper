@@ -20,7 +20,7 @@ export const pending = {
 		const list = rows
 			.map(
 				(r) =>
-					`[\`${r.id}\`](${r.invoiceMessageUrl}) — ${r.totalUsdc} USDC — <t:${Math.floor(r.closedAt.getTime() / 1000)}:R>`,
+					`[\`${r.id}\`](${r.invoiceMessageUrl}) · ${r.totalUsdc} USDC · closed <t:${Math.floor(r.closedAt.getTime() / 1000)}:R>`,
 			)
 			.join('\n');
 

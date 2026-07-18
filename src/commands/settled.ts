@@ -40,7 +40,7 @@ export const settled = {
 			.where(eq(billingCycles.id, invoiceId));
 
 		await interaction.reply({
-			content: `Invoice \`${invoiceId}\` — ${cycle.totalUsdc} USDC — marked as settled.`,
+			content: `Invoice \`${invoiceId}\` (${cycle.totalUsdc} USDC) marked as settled.`,
 			flags: 64,
 		});
 	},
