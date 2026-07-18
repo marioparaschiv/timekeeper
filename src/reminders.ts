@@ -1,18 +1,24 @@
 import { type Client } from 'discord.js';
 import { isNull, eq } from 'drizzle-orm';
 
-import { billingCycles } from '~/db/schema.ts';
+import { billingCycles, guildClients } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
 const REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
-function nudge(cycleId: string, invoiceMessageUrl: string) {
-	return `Reminder: [this invoice](${invoiceMessageUrl}) hasn't been marked as settled yet.`;
+function nudge(invoiceMessageUrl: string, clientUserId?: string) {
+	const reminder = `Reminder: [this invoice](${invoiceMessageUrl}) hasn't been marked as settled yet.`;
+	return clientUserId ? `<@${clientUserId}> ${reminder}` : reminder;
 }
 
 async function sendDueReminders(client: Client) {
-	const open = await db.select().from(billingCycles).where(isNull(billingCycles.settledAt));
+	const [open, clients] = await Promise.all([
+		db.select().from(billingCycles).where(isNull(billingCycles.settledAt)),
+		db.select().from(guildClients),
+	]);
+
+	const clientByGuild = new Map(clients.map(({ guildId, userId }) => [guildId, userId]));
 
 	const now = Date.now();
 
@@ -30,7 +36,12 @@ async function sendDueReminders(client: Client) {
 			const channel = await guild.channels.fetch(channelId!);
 			if (!channel?.isTextBased() || !channel.isSendable()) continue;
 
-			await channel.send({ content: nudge(cycle.id, cycle.invoiceMessageUrl) });
+			const clientUserId = clientByGuild.get(cycle.guildId);
+
+			await channel.send({
+				content: nudge(cycle.invoiceMessageUrl, clientUserId),
+				allowedMentions: { users: clientUserId ? [clientUserId] : [] },
+			});
 
 			await db
 				.update(billingCycles)
