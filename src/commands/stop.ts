@@ -4,6 +4,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
 import { formatDuration } from '~/format.ts';
 import { sessions } from '~/db/schema.ts';
+import { stopTicker } from '~/ticker.ts';
 import { db } from '~/db/client.ts';
 
 export const stop = {
@@ -38,6 +39,8 @@ export const stop = {
 			await interaction.reply({ content: 'No active session.', flags: 64 });
 			return;
 		}
+
+		stopTicker(active.id);
 
 		const now = new Date();
 		const duration = formatDuration(now.getTime() - active.startedAt.getTime());

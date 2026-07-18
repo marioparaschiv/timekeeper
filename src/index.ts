@@ -10,9 +10,9 @@ import {
 import { startReminders } from '~/reminders.ts';
 import { commands } from '~/commands/index.ts';
 import { handleButton } from '~/buttons.ts';
+import { resumeTickers } from '~/ticker.ts';
+import { commandIds } from '~/messages.ts';
 import { env } from '~/env';
-
-export const commandIds = new Map<string, string>();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -35,6 +35,7 @@ client.once(Events.ClientReady, async (c) => {
 	);
 
 	startReminders(c);
+	resumeTickers(c);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

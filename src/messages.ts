@@ -1,7 +1,14 @@
 import type { Client } from 'discord.js';
 
+export const commandIds = new Map<string, string>();
+
 export function discordTimestamp(date: Date, style: 'R' | 'D' | 'd' | 't' | 'T' | 'f' = 'R') {
 	return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`;
+}
+
+export function stopMention() {
+	const id = commandIds.get('stop');
+	return id ? `</stop:${id}>` : '`/stop`';
 }
 
 export async function editStartMessage(client: Client, startMessageUrl: string) {
