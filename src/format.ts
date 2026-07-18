@@ -52,19 +52,40 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 
 type BillingCycle = InferSelectModel<typeof billingCycles>;
 
-export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
-	const lines = cycles.map(
-		(cycle) =>
-			`[\`${cycle.id}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC · closed ${discordTimestamp(cycle.closedAt)}`,
-	);
+function invoiceLine(cycle: BillingCycle): string {
+	const status = cycle.settledAt ? 'Settled' : 'Closed';
+	const at = cycle.settledAt ?? cycle.closedAt;
 
+	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC · ${status} · ${discordTimestamp(at)}`;
+}
+
+export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
 	const total = cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
 
 	return new EmbedBuilder()
 		.setTitle(`Pending Invoices (${cycles.length})`)
 		.setColor(0xe8a33d)
-		.setDescription(lines.join('\n'))
+		.setDescription(cycles.map(invoiceLine).join('\n'))
 		.addFields({ name: 'Outstanding', value: `${total} USDC` });
+}
+
+export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
+	const outstanding = cycles
+		.filter((cycle) => !cycle.settledAt)
+		.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+
+	const settled = cycles
+		.filter((cycle) => cycle.settledAt)
+		.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+
+	return new EmbedBuilder()
+		.setTitle(`Invoices (${cycles.length})`)
+		.setColor(0x8ac1ce)
+		.setDescription(cycles.map(invoiceLine).join('\n'))
+		.addFields(
+			{ name: 'Settled', value: `${settled} USDC`, inline: true },
+			{ name: 'Outstanding', value: `${outstanding} USDC`, inline: true },
+		);
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
