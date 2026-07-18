@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { calculateInvoice, formatDuration, formatInvoice, settleButton } from '~/format.ts';
@@ -16,7 +16,7 @@ export const invoice = {
 		if (!guildId) {
 			await interaction.reply({
 				content: 'This command can only be used in a server.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -79,9 +79,9 @@ export const invoice = {
 		if (rows.length === 0 && chargeRows.length === 0) {
 			const content = 'Nothing to invoice.';
 			if (active) {
-				await interaction.followUp({ content, flags: 64 });
+				await interaction.followUp({ content, flags: MessageFlags.Ephemeral });
 			} else {
-				await interaction.reply({ content, flags: 64 });
+				await interaction.reply({ content, flags: MessageFlags.Ephemeral });
 			}
 			return;
 		}

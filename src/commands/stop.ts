@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { discordTimestamp, editStartMessage } from '~/messages.ts';
@@ -17,7 +17,7 @@ export const stop = {
 		if (!guildId) {
 			await interaction.reply({
 				content: 'This command can only be used in a server.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -36,7 +36,10 @@ export const stop = {
 			.get();
 
 		if (!active) {
-			await interaction.reply({ content: 'No active session.', flags: 64 });
+			await interaction.reply({
+				content: 'No active session.',
+				flags: MessageFlags.Ephemeral,
+			});
 			return;
 		}
 

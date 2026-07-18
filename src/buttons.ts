@@ -1,4 +1,4 @@
-import { EmbedBuilder, type ButtonInteraction } from 'discord.js';
+import { EmbedBuilder, MessageFlags, type ButtonInteraction } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
 import { SETTLE_BUTTON_PREFIX, settledEmbed } from '~/format.ts';
@@ -16,7 +16,10 @@ export async function handleButton(interaction: ButtonInteraction) {
 	const cycle = db.select().from(billingCycles).where(eq(billingCycles.id, cycleId)).get();
 
 	if (!cycle) {
-		await interaction.followUp({ content: `No invoice with ID \`${cycleId}\`.`, flags: 64 });
+		await interaction.followUp({
+			content: `No invoice with ID \`${cycleId}\`.`,
+			flags: MessageFlags.Ephemeral,
+		});
 		return;
 	}
 

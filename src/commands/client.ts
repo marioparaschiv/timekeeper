@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
 import { guildClients } from '~/db/schema.ts';
@@ -29,7 +29,7 @@ export const client = {
 		if (!guildId) {
 			await interaction.reply({
 				content: 'This command can only be used in a server.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -47,7 +47,7 @@ export const client = {
 				content: existing
 					? `Invoice reminders in this server mention <@${existing.userId}>.`
 					: 'No client set for this server. Reminders will not mention anyone.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -58,7 +58,7 @@ export const client = {
 			await interaction.reply({
 				content:
 					'Cleared. Invoice reminders in this server will no longer mention a client.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -75,7 +75,7 @@ export const client = {
 
 		await interaction.reply({
 			content: `Invoice reminders in this server will now mention <@${user.id}>.`,
-			flags: 64,
+			flags: MessageFlags.Ephemeral,
 		});
 	},
 };

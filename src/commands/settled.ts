@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
 import { billingCycles } from '~/db/schema.ts';
@@ -21,14 +21,17 @@ export const settled = {
 		const cycle = db.select().from(billingCycles).where(eq(billingCycles.id, invoiceId)).get();
 
 		if (!cycle) {
-			await interaction.reply({ content: `No invoice with ID \`${invoiceId}\`.`, flags: 64 });
+			await interaction.reply({
+				content: `No invoice with ID \`${invoiceId}\`.`,
+				flags: MessageFlags.Ephemeral,
+			});
 			return;
 		}
 
 		if (cycle.settledAt) {
 			await interaction.reply({
 				content: `Invoice \`${invoiceId}\` was already settled on <t:${Math.floor(cycle.settledAt.getTime() / 1000)}:d>.`,
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -41,7 +44,7 @@ export const settled = {
 
 		await interaction.reply({
 			content: `Invoice \`${invoiceId}\` (${cycle.totalUsdc} USDC) marked as settled.`,
-			flags: 64,
+			flags: MessageFlags.Ephemeral,
 		});
 	},
 };
