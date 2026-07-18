@@ -56,7 +56,7 @@ function invoiceLine(cycle: BillingCycle): string {
 	const status = cycle.settledAt ? 'Settled' : 'Closed';
 	const at = cycle.settledAt ?? cycle.closedAt;
 
-	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC · ${status} · ${discordTimestamp(at)}`;
+	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl})\n${cycle.totalUsdc} USDC · ${status} · ${discordTimestamp(at)}`;
 }
 
 export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
@@ -65,7 +65,7 @@ export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
 	return new EmbedBuilder()
 		.setTitle(`Pending Invoices (${cycles.length})`)
 		.setColor(0xe8a33d)
-		.setDescription(cycles.map(invoiceLine).join('\n'))
+		.setDescription(cycles.map(invoiceLine).join('\n\n'))
 		.addFields({ name: 'Outstanding', value: `${total} USDC` });
 }
 
@@ -81,7 +81,7 @@ export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
 	return new EmbedBuilder()
 		.setTitle(`Invoices (${cycles.length})`)
 		.setColor(0x8ac1ce)
-		.setDescription(cycles.map(invoiceLine).join('\n'))
+		.setDescription(cycles.map(invoiceLine).join('\n\n'))
 		.addFields(
 			{ name: 'Settled', value: `${settled} USDC`, inline: true },
 			{ name: 'Outstanding', value: `${outstanding} USDC`, inline: true },
