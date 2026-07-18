@@ -53,20 +53,11 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 type BillingCycle = InferSelectModel<typeof billingCycles>;
 
 function invoiceLine(cycle: BillingCycle): string {
-	const status = cycle.settledAt ? 'Settled' : 'Closed';
-	const at = cycle.settledAt ?? cycle.closedAt;
+	const settled = cycle.settledAt
+		? `Settled ${discordTimestamp(cycle.settledAt)}`
+		: 'Unsettled';
 
-	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl})\n${cycle.totalUsdc} USDC · ${status} · ${discordTimestamp(at)}`;
-}
-
-export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
-	const total = cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
-
-	return new EmbedBuilder()
-		.setTitle(`Pending Invoices (${cycles.length})`)
-		.setColor(0xe8a33d)
-		.setDescription(cycles.map(invoiceLine).join('\n\n'))
-		.addFields({ name: 'Outstanding', value: `${total} USDC` });
+	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl})\n${cycle.totalUsdc} USDC · Invoiced ${discordTimestamp(cycle.closedAt)} · ${settled}`;
 }
 
 export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
