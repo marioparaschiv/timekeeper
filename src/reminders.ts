@@ -8,9 +8,7 @@ const REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 function nudge(invoiceMessageUrl: string, totalUsdc: number, clientUserId?: string) {
-	const reminder = clientUserId
-		? `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC is still outstanding. Payment details are in the invoice above.`
-		: `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC hasn't been marked as settled yet.`;
+	const reminder = `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC is still outstanding. Payment details are in the invoice above.`;
 
 	return clientUserId ? `<@${clientUserId}> ${reminder}` : reminder;
 }
