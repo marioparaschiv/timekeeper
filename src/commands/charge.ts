@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 
 import { charges } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
@@ -19,7 +19,7 @@ export const charge = {
 		if (!guildId) {
 			await interaction.reply({
 				content: 'This command can only be used in a server.',
-				flags: 64,
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -38,7 +38,7 @@ export const charge = {
 
 		await interaction.reply({
 			content: `Charge added: ${description} — $${(amountCents / 100).toFixed(2)}`,
-			flags: 64,
+			flags: MessageFlags.Ephemeral,
 		});
 	},
 };

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 
 import { billingCycles } from '~/db/schema.ts';
 import { formatInvoices } from '~/format.ts';
@@ -16,7 +16,7 @@ export const invoices = {
 		const rows = await db.select().from(billingCycles);
 
 		if (rows.length === 0) {
-			await interaction.reply({ content: 'No invoices yet.', flags: 64 });
+			await interaction.reply({ content: 'No invoices yet.', flags: MessageFlags.Ephemeral });
 			return;
 		}
 
@@ -24,7 +24,7 @@ export const invoices = {
 
 		await interaction.reply({
 			embeds: [formatInvoices(rows, { settledLimit: all ? undefined : 5 })],
-			flags: 64,
+			flags: MessageFlags.Ephemeral,
 		});
 	},
 };
