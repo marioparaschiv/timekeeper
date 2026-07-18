@@ -7,8 +7,11 @@ import { db } from '~/db/client.ts';
 const REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
-function nudge(invoiceMessageUrl: string, clientUserId?: string) {
-	const reminder = `Reminder: [this invoice](${invoiceMessageUrl}) hasn't been marked as settled yet.`;
+function nudge(invoiceMessageUrl: string, totalUsdc: number, clientUserId?: string) {
+	const reminder = clientUserId
+		? `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC is still outstanding. Payment details are in the invoice above.`
+		: `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC hasn't been marked as settled yet.`;
+
 	return clientUserId ? `<@${clientUserId}> ${reminder}` : reminder;
 }
 
@@ -39,7 +42,7 @@ async function sendDueReminders(client: Client) {
 			const clientUserId = clientByGuild.get(cycle.guildId);
 
 			await channel.send({
-				content: nudge(cycle.invoiceMessageUrl, clientUserId),
+				content: nudge(cycle.invoiceMessageUrl, cycle.totalUsdc, clientUserId),
 				allowedMentions: { users: clientUserId ? [clientUserId] : [] },
 			});
 
