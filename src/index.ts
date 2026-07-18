@@ -30,7 +30,9 @@ client.once(Events.ClientReady, async (c) => {
 		commandIds.set(cmd.name, cmd.id);
 	}
 
-	console.log(`Logged in as ${c.user.tag} — ${registered.length} commands registered`);
+	console.log(
+		`Logged in as ${c.user.tag} — ${registered.length} commands registered — db ${env.DATABASE_PATH}`,
+	);
 
 	startReminders(c);
 });

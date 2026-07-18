@@ -8,8 +8,10 @@
 	},
 	"scripts": {
 		"dev": "tsdown --watch src --on-success \"node --env-file=.env dist/index.js\"",
+		"dev:sim": "tsdown --watch src --on-success \"node --env-file=.env.sim dist/index.js\"",
 		"build": "tsdown",
 		"start": "node --env-file=.env dist/index.js",
+		"start:sim": "node --env-file=.env.sim dist/index.js",
 		"deploy": "tsdown && node --env-file=.env dist/deploy.js",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "tsdown && node --env-file=.env dist/migrate.js",
