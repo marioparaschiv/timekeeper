@@ -74,7 +74,7 @@ export function startTicker(
 
 		const message = await channel.messages.fetch(messageId!);
 		await message.edit({
-			content: `Session started (Elapsed: ${formatElapsed(elapsedMs)}). Use ${stopMention()} to end it.`,
+			content: `Session started (Elapsed: ${formatElapsed(elapsedMs)}). Use ${stopMention(guildId!)} to end it.`,
 		});
 
 		return true;

@@ -5,6 +5,7 @@ function required(name: string): string {
 }
 
 export const env = {
+	NODE_ENV: process.env.NODE_ENV ?? 'development',
 	BOT_TOKEN: required('BOT_TOKEN'),
 	DATABASE_PATH: process.env.DATABASE_PATH || 'timekeeper.db',
 	CLIENT_ID: required('CLIENT_ID'),

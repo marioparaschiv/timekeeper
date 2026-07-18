@@ -2,6 +2,7 @@ import {
 	Client,
 	Events,
 	GatewayIntentBits,
+	MessageFlags,
 	REST,
 	Routes,
 	type APIApplicationCommand,
@@ -9,33 +10,73 @@ import {
 
 import { startReminders } from '~/reminders.ts';
 import { commands } from '~/commands/index.ts';
+import { setCommandIds } from '~/messages.ts';
 import { handleButton } from '~/buttons.ts';
 import { resumeTickers } from '~/ticker.ts';
-import { commandIds } from '~/messages.ts';
 import { env } from '~/env';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.once(Events.ClientReady, async (c) => {
-	const rest = new REST().setToken(env.BOT_TOKEN);
-	const body = [...commands.values()].map((cmd) => cmd.data.toJSON());
-	const registered = (await rest.put(
-		Routes.applicationGuildCommands(env.CLIENT_ID, env.GUILD_ID),
-		{
-			body,
-		},
-	)) as APIApplicationCommand[];
+const rest = new REST().setToken(env.BOT_TOKEN);
 
-	for (const cmd of registered) {
-		commandIds.set(cmd.name, cmd.id);
+const isDevelopment = env.NODE_ENV === 'development';
+
+let globalCommandIds = new Map<string, string>();
+
+function commandBody() {
+	return [...commands.values()].map((cmd) => cmd.data.toJSON());
+}
+
+function idsByName(registered: APIApplicationCommand[]) {
+	return new Map(registered.map((cmd) => [cmd.name, cmd.id]));
+}
+
+/**
+ * Global commands take up to an hour to propagate, so development overwrites a
+ * single guild instead to pick changes up immediately.
+ */
+async function registerCommands(client: Client<true>) {
+	if (isDevelopment) {
+		const registered = (await rest.put(
+			Routes.applicationGuildCommands(env.CLIENT_ID, env.GUILD_ID),
+			{ body: commandBody() },
+		)) as APIApplicationCommand[];
+
+		setCommandIds(env.GUILD_ID, idsByName(registered));
+
+		return `${registered.length} commands registered in guild ${env.GUILD_ID}`;
 	}
 
-	console.log(
-		`Logged in as ${c.user.tag} — ${registered.length} commands registered — db ${env.DATABASE_PATH}`,
-	);
+	const registered = (await rest.put(Routes.applicationCommands(env.CLIENT_ID), {
+		body: commandBody(),
+	})) as APIApplicationCommand[];
+
+	// A global command carries the same id in every guild, so each guild the bot
+	// is in maps to that one set.
+	globalCommandIds = idsByName(registered);
+
+	const guilds = await client.guilds.fetch();
+	for (const [guildId] of guilds) setCommandIds(guildId, globalCommandIds);
+
+	return `${registered.length} commands registered globally across ${guilds.size} guild(s)`;
+}
+
+client.once(Events.ClientReady, async (c) => {
+	try {
+		const summary = await registerCommands(c);
+		console.log(`Logged in as ${c.user.tag} — ${summary} — db ${env.DATABASE_PATH}`);
+	} catch (error) {
+		console.error('Failed to register commands:', error);
+	}
 
 	startReminders(c);
 	resumeTickers(c);
+});
+
+client.on(Events.GuildCreate, (guild) => {
+	if (isDevelopment) return;
+
+	setCommandIds(guild.id, globalCommandIds);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -44,7 +85,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	if (interaction.user.id !== env.OWNER_ID) {
 		await interaction.reply({
 			content: 'You are not authorized to use this bot.',
-			flags: 64,
+			flags: MessageFlags.Ephemeral,
 		});
 		return;
 	}
@@ -68,9 +109,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		try {
 			const content = 'Something went wrong executing that command.';
 			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content, flags: 64 });
+				await interaction.followUp({ content, flags: MessageFlags.Ephemeral });
 			} else {
-				await interaction.reply({ content, flags: 64 });
+				await interaction.reply({ content, flags: MessageFlags.Ephemeral });
 			}
 		} catch {}
 	}
