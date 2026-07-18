@@ -10,6 +10,7 @@ import { invoice } from './invoice.ts';
 import { preview } from './preview.ts';
 import { settled } from './settled.ts';
 import { charge } from './charge.ts';
+import { client } from './client.ts';
 import { start } from './start.ts';
 import { stop } from './stop.ts';
 
@@ -26,4 +27,5 @@ export const commands = new Map<string, Command>([
 	[invoice.data.name, invoice],
 	[invoices.data.name, invoices],
 	[settled.data.name, settled],
+	[client.data.name, client],
 ]);

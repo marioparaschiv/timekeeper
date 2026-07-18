@@ -29,6 +29,13 @@
       "when": 1784395794758,
       "tag": "0003_icy_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784401278346,
+      "tag": "0004_bizarre_vanisher",
+      "breakpoints": true
     }
   ]
 }

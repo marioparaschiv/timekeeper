@@ -12,6 +12,12 @@ export const billingCycles = sqliteTable('billing_cycles', {
 	lastReminderAt: integer('last_reminder_at', { mode: 'timestamp_ms' }),
 });
 
+export const guildClients = sqliteTable('guild_clients', {
+	guildId: text('guild_id').primaryKey(),
+	userId: text('user_id').notNull(),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export const charges = sqliteTable('charges', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	guildId: text('guild_id').notNull(),
