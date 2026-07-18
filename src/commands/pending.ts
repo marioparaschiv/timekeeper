@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { isNull } from 'drizzle-orm';
 
+import { formatPendingInvoices } from '~/format.ts';
 import { billingCycles } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
@@ -17,13 +18,6 @@ export const pending = {
 			return;
 		}
 
-		const list = rows
-			.map(
-				(r) =>
-					`[\`${r.id}\`](${r.invoiceMessageUrl}) · ${r.totalUsdc} USDC · closed <t:${Math.floor(r.closedAt.getTime() / 1000)}:R>`,
-			)
-			.join('\n');
-
-		await interaction.reply({ content: list, flags: 64 });
+		await interaction.reply({ embeds: [formatPendingInvoices(rows)], flags: 64 });
 	},
 };

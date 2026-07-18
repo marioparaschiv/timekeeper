@@ -1,7 +1,8 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import type { InferSelectModel } from 'drizzle-orm';
 
-import type { charges, sessions } from '~/db/schema.ts';
+import type { billingCycles, charges, sessions } from '~/db/schema.ts';
+import { discordTimestamp } from '~/messages.ts';
 import { env } from '~/env.ts';
 
 export function formatDuration(ms: number): string {
@@ -47,6 +48,23 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 	return EmbedBuilder.from(embed.toJSON())
 		.setColor(0x57f287)
 		.addFields({ name: 'Settled', value: dateFmt.format(settledAt) });
+}
+
+type BillingCycle = InferSelectModel<typeof billingCycles>;
+
+export function formatPendingInvoices(cycles: BillingCycle[]): EmbedBuilder {
+	const lines = cycles.map(
+		(cycle) =>
+			`[\`${cycle.id}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC · closed ${discordTimestamp(cycle.closedAt)}`,
+	);
+
+	const total = cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+
+	return new EmbedBuilder()
+		.setTitle(`Pending Invoices (${cycles.length})`)
+		.setColor(0xe8a33d)
+		.setDescription(lines.join('\n'))
+		.addFields({ name: 'Outstanding', value: `${total} USDC` });
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
