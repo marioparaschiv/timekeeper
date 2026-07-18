@@ -53,30 +53,57 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 type BillingCycle = InferSelectModel<typeof billingCycles>;
 
 function invoiceLine(cycle: BillingCycle): string {
-	const settled = cycle.settledAt
-		? `Settled ${discordTimestamp(cycle.settledAt)}`
-		: 'Unsettled';
+	const settled = cycle.settledAt ? ` · Settled ${discordTimestamp(cycle.settledAt)}` : '';
 
-	return `[\`${cycle.id}\`](${cycle.invoiceMessageUrl})\n${cycle.totalUsdc} USDC · Invoiced ${discordTimestamp(cycle.closedAt)} · ${settled}`;
+	return `[\`${cycle.id.slice(0, 8)}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC\nInvoiced ${discordTimestamp(cycle.closedAt)}${settled}`;
+}
+
+function total(cycles: BillingCycle[]): number {
+	return cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+}
+
+const FIELD_LIMIT = 1024;
+
+/** Trims to Discord's field limit, noting how many entries were dropped. */
+function fieldValue(cycles: BillingCycle[]): string {
+	const lines = cycles.map(invoiceLine);
+
+	while (lines.length > 0) {
+		const value = lines.join('\n\n');
+		const omitted = cycles.length - lines.length;
+		const suffix = omitted > 0 ? `\n\n*and ${omitted} older*` : '';
+
+		if (value.length + suffix.length <= FIELD_LIMIT) return value + suffix;
+
+		lines.pop();
+	}
+
+	return '*too many to display*';
 }
 
 export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
-	const outstanding = cycles
-		.filter((cycle) => !cycle.settledAt)
-		.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
+	const settled = cycles.filter((cycle) => cycle.settledAt);
+	const unsettled = cycles.filter((cycle) => !cycle.settledAt);
 
-	const settled = cycles
-		.filter((cycle) => cycle.settledAt)
-		.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
-
-	return new EmbedBuilder()
+	const embed = new EmbedBuilder()
 		.setTitle(`Invoices (${cycles.length})`)
-		.setColor(0x8ac1ce)
-		.setDescription(cycles.map(invoiceLine).join('\n\n'))
-		.addFields(
-			{ name: 'Settled', value: `${settled} USDC`, inline: true },
-			{ name: 'Outstanding', value: `${outstanding} USDC`, inline: true },
-		);
+		.setColor(0x8ac1ce);
+
+	if (settled.length > 0) {
+		embed.addFields({
+			name: `Settled · ${total(settled)} USDC`,
+			value: fieldValue(settled),
+		});
+	}
+
+	if (unsettled.length > 0) {
+		embed.addFields({
+			name: `Unsettled · ${total(unsettled)} USDC`,
+			value: fieldValue(unsettled),
+		});
+	}
+
+	return embed;
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
