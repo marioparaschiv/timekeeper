@@ -62,48 +62,49 @@ function total(cycles: BillingCycle[]): number {
 	return cycles.reduce((sum, cycle) => sum + cycle.totalUsdc, 0);
 }
 
-const FIELD_LIMIT = 1024;
+const DESCRIPTION_LIMIT = 4096;
 
-/** Trims to Discord's field limit, noting how many entries were dropped. */
-function fieldValue(cycles: BillingCycle[]): string {
+/**
+ * Oldest first, so the most recent invoice sits at the bottom. Anything that
+ * would overflow is dropped from the top and summarised there instead.
+ */
+function invoiceSection(heading: string, cycles: BillingCycle[], budget: number): string {
+	const header = `**${heading} · ${total(cycles)} USDC**`;
 	const lines = cycles.map(invoiceLine);
 
 	while (lines.length > 0) {
-		const value = lines.join('\n\n');
 		const omitted = cycles.length - lines.length;
-		const suffix = omitted > 0 ? `\n\n*and ${omitted} older*` : '';
+		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n\n` : '';
+		const section = `${header}\n\n${notice}${lines.join('\n\n')}`;
 
-		if (value.length + suffix.length <= FIELD_LIMIT) return value + suffix;
+		if (section.length <= budget) return section;
 
-		lines.pop();
+		lines.shift();
 	}
 
-	return '*too many to display*';
+	return `${header}\n\n*${cycles.length} invoices*`;
 }
 
 export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
-	const settled = cycles.filter((cycle) => cycle.settledAt);
-	const unsettled = cycles.filter((cycle) => !cycle.settledAt);
+	const ordered = [...cycles].sort((a, b) => a.closedAt.getTime() - b.closedAt.getTime());
+	const settled = ordered.filter((cycle) => cycle.settledAt);
+	const unsettled = ordered.filter((cycle) => !cycle.settledAt);
 
-	const embed = new EmbedBuilder()
-		.setTitle(`Invoices (${cycles.length})`)
-		.setColor(0x8ac1ce);
+	const sections: string[] = [];
 
 	if (settled.length > 0) {
-		embed.addFields({
-			name: `Settled · ${total(settled)} USDC`,
-			value: fieldValue(settled),
-		});
+		sections.push(invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2));
 	}
 
 	if (unsettled.length > 0) {
-		embed.addFields({
-			name: `Unsettled · ${total(unsettled)} USDC`,
-			value: fieldValue(unsettled),
-		});
+		const used = sections.reduce((sum, section) => sum + section.length, 0);
+		sections.push(invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4));
 	}
 
-	return embed;
+	return new EmbedBuilder()
+		.setTitle(`Invoices (${cycles.length})`)
+		.setColor(0x8ac1ce)
+		.setDescription(sections.join('\n\n'));
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {

@@ -1,5 +1,4 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
-import { desc } from 'drizzle-orm';
 
 import { billingCycles } from '~/db/schema.ts';
 import { formatInvoices } from '~/format.ts';
@@ -11,10 +10,7 @@ export const invoices = {
 		.setDescription('List every invoice and its status'),
 
 	async execute(interaction: ChatInputCommandInteraction) {
-		const rows = await db
-			.select()
-			.from(billingCycles)
-			.orderBy(desc(billingCycles.closedAt));
+		const rows = await db.select().from(billingCycles);
 
 		if (rows.length === 0) {
 			await interaction.reply({ content: 'No invoices yet.', flags: 64 });
