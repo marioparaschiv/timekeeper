@@ -100,13 +100,14 @@ export const invoice = {
 
 		const invoiceMessageUrl = `https://discord.com/channels/${guildId}/${invoiceMessage.channelId}/${invoiceMessage.id}`;
 
-		await db.transaction(async (tx) => {
-			await tx
+		db.transaction((tx) => {
+			tx
 				.insert(billingCycles)
-				.values({ id: cycleId, guildId, totalUsdc, closedAt: now, invoiceMessageUrl });
+				.values({ id: cycleId, guildId, totalUsdc, closedAt: now, invoiceMessageUrl })
+				.run();
 
 			if (rows.length > 0) {
-				await tx
+				tx
 					.update(sessions)
 					.set({ billingCycleId: cycleId })
 					.where(
@@ -115,11 +116,12 @@ export const invoice = {
 							eq(sessions.userId, userId),
 							isNull(sessions.billingCycleId),
 						),
-					);
+					)
+					.run();
 			}
 
 			if (chargeRows.length > 0) {
-				await tx
+				tx
 					.update(charges)
 					.set({ billingCycleId: cycleId })
 					.where(
@@ -128,7 +130,8 @@ export const invoice = {
 							eq(charges.userId, userId),
 							isNull(charges.billingCycleId),
 						),
-					);
+					)
+					.run();
 			}
 		});
 	},

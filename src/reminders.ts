@@ -8,7 +8,7 @@ const REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 function nudge(cycleId: string, invoiceMessageUrl: string) {
-	return `Just floating this back up — [the invoice from earlier](${invoiceMessageUrl}) is still open on my end. No rush at all, and if it's already handled or something needs changing, let me know and I'll sort it. Invoice \`${cycleId}\`.`;
+	return `Reminder: [this invoice](${invoiceMessageUrl}) hasn't been marked as settled yet.`;
 }
 
 async function sendDueReminders(client: Client) {

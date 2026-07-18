@@ -4,5 +4,5 @@ export default defineConfig({
 	dialect: 'sqlite',
 	schema: './src/db/schema.ts',
 	out: './drizzle',
-	dbCredentials: { url: 'timekeeper.db' },
+	dbCredentials: { url: process.env.DATABASE_PATH || 'timekeeper.db' },
 });
