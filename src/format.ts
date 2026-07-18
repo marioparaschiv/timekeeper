@@ -104,7 +104,7 @@ export function formatInvoices(cycles: BillingCycle[]): EmbedBuilder {
 	return new EmbedBuilder()
 		.setTitle(`Invoices · ${cycles.length}`)
 		.setColor(0x8ac1ce)
-		.setDescription(sections.join('\n\n'));
+		.setDescription(sections.join('\n'));
 }
 
 export function formatInvoice(rows: Session[], now: Date, chargeRows: Charge[] = []): EmbedBuilder {
