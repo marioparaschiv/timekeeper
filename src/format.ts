@@ -53,9 +53,7 @@ export function settledEmbed(embed: EmbedBuilder, settledAt: Date): EmbedBuilder
 type BillingCycle = InferSelectModel<typeof billingCycles>;
 
 function invoiceLine(cycle: BillingCycle): string {
-	const settled = cycle.settledAt
-		? ` · Settled ${discordTimestamp(cycle.settledAt, 'D')}`
-		: '';
+	const settled = cycle.settledAt ? ` · Settled ${discordTimestamp(cycle.settledAt, 'D')}` : '';
 
 	return `[\`${cycle.id.slice(0, 8)}\`](${cycle.invoiceMessageUrl}) · ${cycle.totalUsdc} USDC\nInvoiced ${discordTimestamp(cycle.closedAt, 'D')}${settled}`;
 }
@@ -82,7 +80,8 @@ function invoiceSection(
 
 	while (lines.length > 0) {
 		const omitted = hidden + (shown.length - lines.length);
-		const notice = omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n` : '';
+		const notice =
+			omitted > 0 ? `*... ${omitted} older invoice${omitted === 1 ? '' : 's'}*\n` : '';
 		const section = `${header}\n${notice}${lines.join('\n\n')}`;
 
 		if (section.length <= budget) return section;
@@ -101,19 +100,22 @@ export function formatInvoices(
 	const settledAll = ordered.filter((cycle) => cycle.settledAt);
 	const unsettled = ordered.filter((cycle) => !cycle.settledAt);
 
-	const settled =
-		settledLimit === undefined ? settledAll : settledAll.slice(-settledLimit);
+	const settled = settledLimit === undefined ? settledAll : settledAll.slice(-settledLimit);
 	const hidden = settledAll.length - settled.length;
 
 	const sections: string[] = [];
 
 	if (settled.length > 0) {
-		sections.push(invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2, total(settledAll), hidden));
+		sections.push(
+			invoiceSection('Settled', settled, DESCRIPTION_LIMIT / 2, total(settledAll), hidden),
+		);
 	}
 
 	if (unsettled.length > 0) {
 		const used = sections.reduce((sum, section) => sum + section.length, 0);
-		sections.push(invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4, total(unsettled)));
+		sections.push(
+			invoiceSection('Unsettled', unsettled, DESCRIPTION_LIMIT - used - 4, total(unsettled)),
+		);
 	}
 
 	return new EmbedBuilder()

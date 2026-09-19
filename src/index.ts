@@ -80,6 +80,18 @@ client.on(Events.GuildCreate, (guild) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+	if (interaction.isAutocomplete()) {
+		const command = commands.get(interaction.commandName);
+		if (!command?.autocomplete) return;
+
+		try {
+			await command.autocomplete(interaction);
+		} catch (error) {
+			console.error(`Autocomplete failed for /${interaction.commandName}:`, error);
+		}
+		return;
+	}
+
 	if (!interaction.isChatInputCommand() && !interaction.isButton()) return;
 
 	if (interaction.user.id !== env.OWNER_ID) {

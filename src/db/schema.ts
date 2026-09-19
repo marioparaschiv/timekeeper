@@ -10,6 +10,9 @@ export const billingCycles = sqliteTable('billing_cycles', {
 	settledAt: integer('settled_at', { mode: 'timestamp_ms' }),
 	invoiceMessageUrl: text('invoice_message_url').notNull(),
 	lastReminderAt: integer('last_reminder_at', { mode: 'timestamp_ms' }),
+	remindersPausedUntil: integer('reminders_paused_until', { mode: 'timestamp_ms' }),
+	reminderIntervalMs: integer('reminder_interval_ms'),
+	nextReminderAt: integer('next_reminder_at', { mode: 'timestamp_ms' }),
 });
 
 export const guildClients = sqliteTable('guild_clients', {

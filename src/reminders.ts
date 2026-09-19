@@ -1,11 +1,27 @@
+import { type InferSelectModel, isNull, eq } from 'drizzle-orm';
 import { type Client } from 'discord.js';
-import { isNull, eq } from 'drizzle-orm';
 
 import { billingCycles, guildClients } from '~/db/schema.ts';
 import { db } from '~/db/client.ts';
 
-const REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
+export const DEFAULT_REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
+
+type BillingCycle = InferSelectModel<typeof billingCycles>;
+
+/**
+ * When the next reminder for an open cycle is due, or null while paused. A
+ * one-off nextReminderAt override wins over the recurring interval.
+ */
+export function nextReminderDue(cycle: BillingCycle): Date | null {
+	if (cycle.remindersPausedUntil && cycle.remindersPausedUntil.getTime() > Date.now())
+		return null;
+
+	if (cycle.nextReminderAt) return cycle.nextReminderAt;
+
+	const interval = cycle.reminderIntervalMs ?? DEFAULT_REMINDER_INTERVAL_MS;
+	return new Date((cycle.lastReminderAt ?? cycle.closedAt).getTime() + interval);
+}
 
 function nudge(invoiceMessageUrl: string, totalUsdc: number, clientUserId?: string) {
 	const reminder = `Reminder: [this invoice](${invoiceMessageUrl}) for ${totalUsdc} USDC is still outstanding. Payment details are in the invoice above.`;
@@ -24,8 +40,8 @@ async function sendDueReminders(client: Client) {
 	const now = Date.now();
 
 	for (const cycle of open) {
-		const since = (cycle.lastReminderAt ?? cycle.closedAt).getTime();
-		if (now - since < REMINDER_INTERVAL_MS) continue;
+		const due = nextReminderDue(cycle);
+		if (!due || due.getTime() > now) continue;
 
 		const match = cycle.invoiceMessageUrl.match(/channels\/(\d+)\/(\d+)\/(\d+)$/);
 		if (!match) continue;
@@ -46,7 +62,7 @@ async function sendDueReminders(client: Client) {
 
 			await db
 				.update(billingCycles)
-				.set({ lastReminderAt: new Date(now) })
+				.set({ lastReminderAt: new Date(now), nextReminderAt: null })
 				.where(eq(billingCycles.id, cycle.id));
 		} catch (error) {
 			console.error(`Failed to send reminder for invoice ${cycle.id}:`, error);

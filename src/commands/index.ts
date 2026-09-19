@@ -1,10 +1,12 @@
 import type {
+	AutocompleteInteraction,
 	ChatInputCommandInteraction,
 	SlashCommandBuilder,
 	SlashCommandOptionsOnlyBuilder,
 	SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 
+import { reminders } from './reminders.ts';
 import { invoices } from './invoices.ts';
 import { invoice } from './invoice.ts';
 import { preview } from './preview.ts';
@@ -17,6 +19,7 @@ import { stop } from './stop.ts';
 export interface Command {
 	data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder;
 	execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+	autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
 export const commands = new Map<string, Command>([
@@ -28,4 +31,5 @@ export const commands = new Map<string, Command>([
 	[invoices.data.name, invoices],
 	[settled.data.name, settled],
 	[client.data.name, client],
+	[reminders.data.name, reminders],
 ]);
