@@ -11,6 +11,7 @@ import { invoices } from './invoices.ts';
 import { invoice } from './invoice.ts';
 import { preview } from './preview.ts';
 import { settled } from './settled.ts';
+import { cancel } from './cancel.ts';
 import { charge } from './charge.ts';
 import { client } from './client.ts';
 import { start } from './start.ts';
@@ -25,6 +26,7 @@ export interface Command {
 export const commands = new Map<string, Command>([
 	[start.data.name, start],
 	[stop.data.name, stop],
+	[cancel.data.name, cancel],
 	[charge.data.name, charge],
 	[preview.data.name, preview],
 	[invoice.data.name, invoice],

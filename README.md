@@ -19,25 +19,26 @@ The bot is single-tenant by design. Only the configured owner can run commands, 
 
 ## Features
 
-* Per-session time tracking with live "started X minutes ago" timestamps
-* Flat charges for fixed-fee items mixed into the same invoice
-* Invoice preview before you commit to closing a cycle
-* Per-server billing isolation so multiple clients stay separate
-* Settlement tracking with a one-click button and reminders for unpaid invoices
-* Discord-native output using rich embeds and timestamps
-* SQLite storage through Drizzle ORM with a single local database file
+- Per-session time tracking with live "started X minutes ago" timestamps
+- Flat charges for fixed-fee items mixed into the same invoice
+- Invoice preview before you commit to closing a cycle
+- Per-server billing isolation so multiple clients stay separate
+- Settlement tracking with a one-click button and reminders for unpaid invoices
+- Discord-native output using rich embeds and timestamps
+- SQLite storage through Drizzle ORM with a single local database file
 
 ## Commands
 
-| Command | Description |
-| --- | --- |
-| `/start` | Begin a billing session in the current server |
-| `/stop` | Stop the active session and log the elapsed time |
-| `/charge <amount> <description>` | Add a flat USD charge to the next invoice |
-| `/preview` | Show what the current invoice looks like without closing it |
-| `/invoice` | Close the billing cycle, post the invoice, and start a fresh one |
-| `/invoices [all]` | List invoices grouped by settled and unsettled |
-| `/settled <invoice>` | Mark an invoice as paid |
+| Command                          | Description                                                      |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `/start`                         | Begin a billing session in the current server                    |
+| `/stop`                          | Stop the active session and log the elapsed time                 |
+| `/cancel`                        | Discard the active session and delete it from the database       |
+| `/charge <amount> <description>` | Add a flat USD charge to the next invoice                        |
+| `/preview`                       | Show what the current invoice looks like without closing it      |
+| `/invoice`                       | Close the billing cycle, post the invoice, and start a fresh one |
+| `/invoices [all]`                | List invoices grouped by settled and unsettled                   |
+| `/settled <invoice>`             | Mark an invoice as paid                                          |
 
 Closed invoices carry a **Mark as Settled** button that only the owner can use. Clicking it records the settlement date, turns the embed green, and removes the button. Anything still unsettled five days after it was invoiced gets a reminder in the channel it was posted in, repeating every five days until it is settled.
 
@@ -67,9 +68,9 @@ Time is rounded up to the nearest minute, and the final invoice total is rounded
 
 ### Requirements
 
-* Node.js 22 or newer
-* pnpm
-* A Discord application and bot token
+- Node.js 22 or newer
+- pnpm
+- A Discord application and bot token
 
 ### Installation
 
@@ -92,15 +93,15 @@ SOLANA_ADDRESS=your-usdc-receiving-address
 OWNER_ID=your-discord-user-id
 ```
 
-| Variable | Purpose |
-| --- | --- |
-| `BOT_TOKEN` | Discord bot token from the developer portal |
-| `CLIENT_ID` | Application ID for slash command registration |
-| `GUILD_ID` | Server ID where commands should be registered |
-| `HOURLY_RATE` | Your rate in USD per hour (e.g. `75`) |
-| `SOLANA_ADDRESS` | USDC/Solana address shown on invoices |
-| `OWNER_ID` | Your Discord user ID. Only this user can run commands |
-| `DATABASE_PATH` | Optional. SQLite file to use, defaults to `timekeeper.db` |
+| Variable         | Purpose                                                   |
+| ---------------- | --------------------------------------------------------- |
+| `BOT_TOKEN`      | Discord bot token from the developer portal               |
+| `CLIENT_ID`      | Application ID for slash command registration             |
+| `GUILD_ID`       | Server ID where commands should be registered             |
+| `HOURLY_RATE`    | Your rate in USD per hour (e.g. `75`)                     |
+| `SOLANA_ADDRESS` | USDC/Solana address shown on invoices                     |
+| `OWNER_ID`       | Your Discord user ID. Only this user can run commands     |
+| `DATABASE_PATH`  | Optional. SQLite file to use, defaults to `timekeeper.db` |
 
 ### Database
 
@@ -136,11 +137,11 @@ pm2 start pm2.config.cjs
 
 ## Tech Stack
 
-* TypeScript on Node 22
-* [discord.js](https://discord.js.org/) for the Discord gateway and slash commands
-* [Drizzle ORM](https://orm.drizzle.team/) over [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
-* [tsdown](https://github.com/rolldown/tsdown) for builds
-* [oxlint](https://oxc.rs/) and [oxfmt](https://oxc.rs/) for linting and formatting
+- TypeScript on Node 22
+- [discord.js](https://discord.js.org/) for the Discord gateway and slash commands
+- [Drizzle ORM](https://orm.drizzle.team/) over [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
+- [tsdown](https://github.com/rolldown/tsdown) for builds
+- [oxlint](https://oxc.rs/) and [oxfmt](https://oxc.rs/) for linting and formatting
 
 ## Project Layout
 
