@@ -1,4 +1,4 @@
-import type { Client } from 'discord.js';
+import type { Client, Message } from 'discord.js';
 
 /** Guild-scoped commands get a distinct id per guild, so mentions built from
  * another guild's id render as plain text. */
@@ -17,10 +17,20 @@ export function stopMention(guildId: string) {
 	return id ? `</stop:${id}>` : '`/stop`';
 }
 
-export async function editStartMessage(
+export async function editStartMessage(client: Client, startMessageUrl: string) {
+	await withStartMessage(client, startMessageUrl, (message) =>
+		message.edit({ content: 'Session started.' }),
+	);
+}
+
+export async function deleteStartMessage(client: Client, startMessageUrl: string) {
+	await withStartMessage(client, startMessageUrl, (message) => message.delete());
+}
+
+async function withStartMessage(
 	client: Client,
 	startMessageUrl: string,
-	content = 'Session started.',
+	action: (message: Message) => Promise<unknown>,
 ) {
 	const match = startMessageUrl.match(/channels\/(\d+)\/(\d+)\/(\d+)$/);
 	if (!match) return;
@@ -33,7 +43,7 @@ export async function editStartMessage(
 		if (!channel?.isTextBased()) return;
 
 		const message = await channel.messages.fetch(messageId!);
-		await message.edit({ content });
+		await action(message);
 	} catch {
 		// Start message may have been deleted
 	}
