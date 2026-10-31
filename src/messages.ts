@@ -17,7 +17,11 @@ export function stopMention(guildId: string) {
 	return id ? `</stop:${id}>` : '`/stop`';
 }
 
-export async function editStartMessage(client: Client, startMessageUrl: string) {
+export async function editStartMessage(
+	client: Client,
+	startMessageUrl: string,
+	content = 'Session started.',
+) {
 	const match = startMessageUrl.match(/channels\/(\d+)\/(\d+)\/(\d+)$/);
 	if (!match) return;
 
@@ -29,7 +33,7 @@ export async function editStartMessage(client: Client, startMessageUrl: string) 
 		if (!channel?.isTextBased()) return;
 
 		const message = await channel.messages.fetch(messageId!);
-		await message.edit({ content: 'Session started.' });
+		await message.edit({ content });
 	} catch {
 		// Start message may have been deleted
 	}
