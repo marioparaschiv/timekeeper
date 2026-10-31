@@ -1,7 +1,7 @@
 import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { editStartMessage } from '~/messages.ts';
+import { deleteStartMessage } from '~/messages.ts';
 import { sessions } from '~/db/schema.ts';
 import { stopTicker } from '~/ticker.ts';
 import { db } from '~/db/client.ts';
@@ -46,9 +46,10 @@ export const cancel = {
 		db.delete(sessions).where(eq(sessions.id, active.id)).run();
 
 		await interaction.reply({
-			content: `[Session cancelled](${active.startMessageUrl}). It will not be billed.`,
+			content: 'Session cancelled. It will not be billed.',
+			flags: MessageFlags.Ephemeral,
 		});
 
-		editStartMessage(interaction.client, active.startMessageUrl, 'Session cancelled.');
+		await deleteStartMessage(interaction.client, active.startMessageUrl);
 	},
 };
